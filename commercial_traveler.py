@@ -104,8 +104,8 @@ class Ville(object):
         testedLength = 0
         for i in range(len(trajet.etapes)):
             for j in range(i + 2,len(trajet.etapes)):
-                currentLength = ville.distance(i, i + 1)
-                testedLength = ville.distance(i, j)
+                currentLength = self.distance(i, i + 1)
+                testedLength = self.distance(i, j)
                 if currentLength > testedLength:
                     trajet.intervension(i,j)
         return trajet                      
@@ -118,14 +118,14 @@ class Ville(object):
         `maxiter`.
         """
         if trajet == None:
-            trajet = ville.trajet_voisins()
+            trajet = self.trajet_voisins()
         nbIter = 0
         for i in range(len(trajet.etapes)):
             for j in range(i + 2,len(trajet.etapes)):
                 if nbIter == maxiter:
                     break
-                currentLength = ville.distance(i, i + 1)
-                testedLength = ville.distance(i, j)
+                currentLength = self.distance(i, i + 1)
+                testedLength = self.distance(i, j)
                 if currentLength > testedLength:
                     trajet.intervension(i,j)
                 nbIter = nbIter + 1               
