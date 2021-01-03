@@ -47,25 +47,34 @@ class Ville(object):
             
             
     def nb_trajets(self):
-        """Retourne le nombre total (entier) de trajets: (n-1)!/2."""
-
-        raise NotImplementedError
-
+        """Retourne le nombre total (entier) de trajets: (n-1)!/2."""     
+        nbRoads = len(self.destinations)
+        return np.math.factorial(nbRoads - 1)/2
+        
     def distance(self, i, j):
         """
-        Retourne la distance Manhattan-L1 entre les destinations numÃ©ro
+        Retourne la distance Manhattan-L1 entre les destinations numero
         *i* et *j*.
-        """
-
-        raise NotImplementedError
+        """       
+        return np.math.abs(self.destinations[j][1] - self.destinations[i][1]) + np.math.abs(self.destinations[j][0] - self.destinations[i][0])       
 
     def plus_proche(self, i, exclus=[]):
         """
         Retourne la destination la plus proche de la destination *i*, hors les
         destinations de la liste `exclus`.
         """
+        distanceList = np.zeros(len(self.destinations))
+        for j in range(len(self.destinations)):
+            if j not in exclus:
+                distanceList[j] = Ville.distance(self, i, j)
+        
+        """second way to implement the calculation of distance
+        distanceList2 = np.array([ Ville.distance(self, i, j) for j in range(len(self.destinations)) ])
+        """
+        
+        closest = np.sort(distanceList, axis=None, kind='mergesort')[0]
 
-        raise NotImplementedError
+        return closest
 
     def trajet_voisins(self, depart=0):
         """
@@ -74,16 +83,32 @@ class Ville(object):
         les destinations dÃ©jÃ  visitÃ©es) en partant de l'Ã©tape initiale
         `depart`.
         """
-
-        raise NotImplementedError
+        frm = depart
+        exclude = []
+        trajet = [depart]
+        item = 0
+        while len(exclude) != len(self.destinations):
+            item = Ville.plus_proche(self, frm, exclude)       
+            frm = item
+            trajet.append(item)
+            exclude.append(item)
+            
+        return trajet
 
     def optimisation_trajet(self, trajet):
         """
         Retourne le trajet le plus court de tous les trajets Â« voisins Â» Ã 
         `trajet` (i.e. rÃ©sultant d'une simple interversion de 2 Ã©tapes).
         """
-
-        raise NotImplementedError
+        currentLength = 0
+        testedLength = 0
+        for i in range(len(trajet.etapes)):
+            for j in range(i + 2,len(trajet.etapes)):
+                currentLength = ville.distance(i, i + 1)
+                testedLength = ville.distance(i, j)
+                if currentLength > testedLength:
+                    trajet.intervension(i,j)
+        return trajet                      
 
     def trajet_opt2(self, trajet=None, maxiter=100):
         """
@@ -92,9 +117,20 @@ class Ville(object):
         interversion successive de 2 Ã©tapes.  Le nombre maximum d'itÃ©ration est
         `maxiter`.
         """
-
-        raise NotImplementedError
-
+        if trajet == None:
+            trajet = ville.trajet_voisins()
+        nbIter = 0
+        for i in range(len(trajet.etapes)):
+            for j in range(i + 2,len(trajet.etapes)):
+                if nbIter == maxiter:
+                    break
+                currentLength = ville.distance(i, i + 1)
+                testedLength = ville.distance(i, j)
+                if currentLength > testedLength:
+                    trajet.intervension(i,j)
+                nbIter = nbIter + 1               
+            nbIter = nbIter + 1
+        return trajet
 
 class Trajet(object):
 
@@ -108,25 +144,34 @@ class Trajet(object):
         Initialisation sur une `ville`.  Si `etapes` n'est pas spÃ©cifiÃ©, le
         trajet par dÃ©faut est celui suivant les destinations de `ville`.
         """
+        if etapes != None:
+            self.etapes = etapes
+        else:
+            self.etapes = ville.destinations
+        
 
-        raise NotImplementedError
-
-    def longueur(self):
+    def longueur(self, ville):
         """
         Retourne la longueur totale du trajet *bouclÃ©* (i.e. revenant Ã  son
         point de dÃ©part).
         """
-
-        raise NotImplementedError
+        
+        length = ville.distance(self.etapes[0],self.etapes[len(self.etapes)] - 1)
+        for i in range(len(self.etapes) - 1):
+            length = length + ville.distance(i,i+1)
+        return length
 
     def interversion(self, i, j):
         """
         Retourne un nouveau `Trajet` rÃ©sultant de l'interversion des 2 Ã©tapes
         *i* et *j*.
         """
-
-        raise NotImplementedError
-
+        newPath = self.etapes
+        step1 = self.etapes[i]
+        step2 = self.etapes[j]
+        newPath[i] = step2
+        newPath[j] = step1
+        self.etapes = newPath
 
 # TESTS ==============================
 
@@ -135,7 +180,7 @@ def test_ville_aleatoire():
     ville = Ville()
     ville.aleatoire(10)
     assert ville.destinations.shape == (10, 2)
-    assert N.issubdtype(ville.destinations.dtype, int)
+    assert np.issubdtype(ville.destinations.dtype, int)
 
 def test_ville_lecture():
 
@@ -148,7 +193,7 @@ def test_ville_lecture():
 def ville_test():
 
     ville = Ville()
-    ville.destinations = N.array([[0, 0], [1, 1], [3, 0], [2, 2]])
+    ville.destinations = np.array([[0, 0], [1, 1], [3, 0], [2, 2]])
     return ville
 
 def test_ville_ecriture(ville_test):
@@ -204,3 +249,5 @@ def test_ville_optimisation_trajet(ville_test, trajet_test):
 if __name__=="__main__":
     NewYork = Ville()
     NewYork.aleatoire()
+    
+    test_ville_aleatoire()
